@@ -31,10 +31,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 // 라우트 등록
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
+const reservationRoutes = require('./routes/reservationRoutes');
+
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/reservations', reservationRoutes);
 
-// 기본 페이지 -> 로그인 화면
+
+// 기본 페이지는 로그인 화면으로
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
