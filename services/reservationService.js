@@ -72,13 +72,13 @@ async function changeSeat(userId, targetSeatId) {
     try {
         await conn.beginTransaction();
 
-        // 기존 예약 종료
+        // 기존 좌석 예약 종료
         await conn.query(
             "UPDATE reservations SET status = 'RETURNED', end_time = NOW() WHERE id = ?",
             [current.id],
         );
 
-        // 새 예약 생성 (새 시작시간=NOW, 4시간)
+        // 새 좌석 예약 생성. 좌석 시작시간은 현재 시각이고 4시간 유지.
         await conn.query(
             'INSERT INTO reservations (user_id, seat_id, start_time, end_time) VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 4 HOUR))',
             [userId, targetSeatId],
