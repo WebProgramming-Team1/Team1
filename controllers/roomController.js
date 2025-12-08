@@ -1,5 +1,9 @@
 const roomService = require('../services/roomService');
 
+/**
+ * GET /api/rooms
+ * 열람실 목록과 각 좌석 정보를 조회
+ */
 exports.listRooms = async (req, res, next) => {
     try {
         const rooms = await roomService.listRooms();
@@ -9,6 +13,10 @@ exports.listRooms = async (req, res, next) => {
     }
 };
 
+/**
+ * GET /api/rooms/:roomId/seats
+ * 특정 열람실 좌석 목록과 내 좌석 정보를 조회
+ */
 exports.getSeatsForRoom = async (req, res, next) => {
     try {
         const roomId = Number(req.params.roomId);

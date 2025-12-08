@@ -32,11 +32,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const authRoutes = require('./routes/authRoutes');
 const roomRoutes = require('./routes/roomRoutes');
 const reservationRoutes = require('./routes/reservationRoutes');
+const seatRoutes = require('./routes/seatRoutes');
 
 app.use('/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/reservations', reservationRoutes);
-
+app.use('/api/seats', seatRoutes);
 
 // 기본 페이지는 로그인 화면으로
 app.get('/', (req, res) => {
