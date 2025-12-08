@@ -1,5 +1,9 @@
 const reservationService = require('../services/reservationService');
 
+/**
+ * GET /api/reservations/me
+ * 내 현재 예약한 좌석 정보와 예약 이력 조회
+ */
 exports.getMyReservationAndHistory = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -10,6 +14,10 @@ exports.getMyReservationAndHistory = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/reservations
+ * 좌석 발급
+ */
 exports.reserveSeat = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -21,6 +29,10 @@ exports.reserveSeat = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/reservations/change
+ * 좌석 변경 (현재 ACTIVE 예약을 다른 좌석으로 이동)
+ */
 exports.changeSeat = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -32,6 +44,10 @@ exports.changeSeat = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/reservations/:id/extend
+ * 좌석 사용 시간 연장
+ */
 exports.extendReservation = async (req, res, next) => {
     try {
         const userId = req.user.id;
@@ -43,6 +59,10 @@ exports.extendReservation = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/reservations/:id/return
+ * 좌석 반납
+ */
 exports.returnReservation = async (req, res, next) => {
     try {
         const userId = req.user.id;
