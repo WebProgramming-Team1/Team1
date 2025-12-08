@@ -2,8 +2,8 @@ const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
-const dotenv = require('dotenv');
 
+const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
@@ -30,7 +30,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // 라우트 등록
 const authRoutes = require('./routes/authRoutes');
+const roomRoutes = require('./routes/roomRoutes');
 app.use('/auth', authRoutes);
+app.use('/api/rooms', roomRoutes);
 
 // 기본 페이지 -> 로그인 화면
 app.get('/', (req, res) => {
