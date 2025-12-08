@@ -1,4 +1,37 @@
+const bcrypt = require('bcrypt');
+const userModel = require('../models/userModel');
 const passport = require('passport');
+
+
+/**
+ * POST /auth/register
+ * body: { username, password, name }
+ */
+exports.register = async (req, res, next) => {
+    try {
+        const { username, password, name } = req.body;
+
+        if (!username || !password || !name) {
+            return res.status(400).json({ message: '아이디, 이름, 비밀번호는 필수입니다.' });
+        }
+
+        const existing = await userModel.findByUsername(username);
+        if (existing) {
+            return res.status(409).json({ message: '이미 존재하는 아이디입니다.' });
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const userId = await userModel.createUser({ username, passwordHash, name });
+
+        return res.status(201).json({
+            message: '회원가입이 완료되었습니다.',
+            user: { id: userId, username, name },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 
 /**
  * POST /auth/login
