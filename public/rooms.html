@@ -1,10 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PNU 플레이스</title>
+    <style>
+        body{ font-family: 'Pretendard', sans-serif; margin:0; }
+        .container{ display:flex; min-height:100vh; }
+        .sidebar{
+            width:260px;
+            background:#005baa;
+            color:#fff;
+            padding:25px;
+            box-sizing:border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .sidebar h1{
+            margin:0 0 20px 0;
+            font-size:24px;
+            font-weight: 800;
+            line-height:1.2;
+        }
+
+        /* 사이드바 메뉴 스타일 */
+        .menu-btn {
+            display: block;
+            text-decoration: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            font-weight: 600;
+            transition: 0.2s;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .menu-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .menu-btn.active {
+            background: white;
+            color: #005baa;
+        }
+
+        /* 관리자 버튼 (기본 숨김) */
+        #admin-btn {
+            background: #343a40;
+            display: none; /* JS로 제어 */
+        }
+        #admin-btn:hover { background: #495057; }
+
+        /* 로그아웃 버튼 (하단 배치) */
+        .logout-area {
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+        }
+        #logout-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.4);
+            width: 100%;
+            text-align: center;
+        }
+        #logout-btn:hover {
+            background: rgba(220, 53, 69, 0.8);
+            border-color: transparent;
+        }
+
+        .main{
+            flex:1;
+            padding:30px;
+            box-sizing:border-box;
+            background:#f7f9fc;
+        }
+        h2 { color: #333; margin-top: 0; }
+        .rooms{ display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:20px; }
+        .room-card{
+            background:#fff;
+            border-radius:12px;
+            padding:20px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            transition:transform .2s ease, box-shadow .2s ease;
+            cursor: pointer;
+            border: 1px solid #eee;
+        }
+        .room-card:hover{ transform:translateY(-5px); box-shadow:0 8px 24px rgba(0,0,0,0.1); border-color: #005baa; }
+        .room-card h3 { margin: 0 0 10px 0; color: #005baa; font-size: 1.2rem; }
+        .room-card p { margin: 5px 0; color: #666; font-size: 0.95rem; }
+        .seat-stat { font-weight: bold; color: #007bff; }
+    </style>
 </head>
 <body>
+<div class="container">
+    <aside class="sidebar">
+        <h1>PNU Place</h1>
 
+        <a class="menu-btn" href="mypage.html">마이페이지</a>
+        <a id="admin-btn" class="menu-btn" href="admin.html">⚙️ 관리자 페이지</a>
+
+        <div class="logout-area">
+            <button id="logout-btn" class="menu-btn">로그아웃</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <h2>열람실 목록</h2>
+        <div id="rooms-container" class="rooms">
+            <p>방 목록을 불러오는 중...</p>
+        </div>
+    </main>
+</div>
+<script src="/js/rooms.js"></script>
 </body>
 </html>

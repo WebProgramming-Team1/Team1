@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// 데이터베이스 연결 설정
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 3306,
@@ -12,15 +13,25 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    enableKeepAlive: true,
+});
+
+// 연결 에러 핸들러
+pool.on('error', (err) => {
+    console.error('Database pool error:', err);
 });
 
 /**
  * 공통 쿼리 헬퍼
  */
 async function query(sql, params) {
-    const [rows] = await pool.query(sql, params);
-
-    return rows;
+    try {
+        const [rows] = await pool.query(sql, params);
+        return rows;
+    } catch (err) {
+        console.error('Query error:', sql, err);
+        throw err;
+    }
 }
 
 module.exports = {

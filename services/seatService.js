@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
 const seatModel = require('../models/seatModel');
 const reservationModel = require('../models/reservationModel');
+const seatReportModel = require('../models/seatReportModel');
 
 async function reportProblem(userId, seatId, category, detail) {
     // 내가 사용 중인 좌석 조회
@@ -34,8 +35,8 @@ async function reportProblem(userId, seatId, category, detail) {
 
         // 좌석 신고를 기록
         await conn.query(
-            'INSERT INTO seat_reports (seat_id, user_id, category, detail) VALUES (?, ?, ?, ?)',
-            [seatId, userId, category, detail || ''],
+            'INSERT INTO seat_reports (seat_id, user_id, category, detail, status) VALUES (?, ?, ?, ?, ?)',
+            [seatId, userId, category, detail || '', 'PENDING'],
         );
 
         // 좌석 상태를 UNUSABLE로 변경
@@ -46,7 +47,7 @@ async function reportProblem(userId, seatId, category, detail) {
 
         // 예약 반납 처리
         await conn.query(
-            "UPDATE reservations SET status = 'RETURNED', end_time = NOW() WHERE id = ?",
+            "UPDATE reservations SET status = 'COMPLETED', end_time = NOW() WHERE id = ?",
             [active.id],
         );
 

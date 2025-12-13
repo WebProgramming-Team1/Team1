@@ -1,10 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>마이페이지 | PNU Place</title>
+    <style>
+        /* ... 기존 CSS ... */
+        :root {
+            --primary-color: #005baa;
+            --primary-dark: #004a8b;
+            --secondary-color: #f8f9fa;
+            --text-color: #333;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        body { margin:0; font-family: 'Pretendard', sans-serif; background:#f0f2f5; min-height:100vh; display:flex; flex-direction:column; }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; }
+        .nav-actions { display: flex; gap: 10px; }
+        .nav-btn {
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+        .nav-btn:hover { background: white; color: var(--primary-color); }
+
+        .nav-btn.report { background: rgba(220, 53, 69, 0.8); }
+        .nav-btn.report:hover { background: #dc3545; color: white; }
+
+        /* 로그아웃 버튼 스타일 */
+        .nav-btn.logout { background: transparent; border: 1px solid rgba(255,255,255,0.5); }
+        .nav-btn.logout:hover { background: rgba(255,255,255,0.1); color: white; border-color: white; }
+
+        /* ... 메인 컨텐츠 및 카드 스타일 (기존 유지) ... */
+        main { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .dashboard-card { background: white; width: 100%; max-width: 400px; border-radius: 24px; box-shadow: var(--card-shadow); overflow: hidden; animation: slideUp 0.5s ease-out; }
+        .card-header { background: var(--secondary-color); padding: 20px 30px; border-bottom: 1px solid #eee; text-align: center; }
+        .room-name { font-size: 1.1rem; color: #666; margin-bottom: 5px; font-weight: 500; }
+        .seat-number { font-size: 2.5rem; font-weight: 800; color: var(--primary-color); margin: 0; line-height: 1.2; }
+        .card-body { padding: 40px 30px; text-align: center; }
+        .timer-label { font-size: 0.9rem; font-weight: 600; color: #888; margin-bottom: 10px; text-transform: uppercase; }
+        .timer-display { font-size: 3.5rem; font-weight: 700; color: #2c3e50; margin-bottom: 30px; font-variant-numeric: tabular-nums; letter-spacing: -2px; }
+        .action-buttons { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+        .btn { border: none; padding: 16px; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline-danger { background: white; color: var(--danger-color); border: 2px solid var(--danger-color); }
+        .btn-outline-danger:hover { background: var(--danger-color); color: white; }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; color: #888; }
+        .empty-icon { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
+        .home-link-btn { margin-top: 20px; background: var(--primary-color); color: white; text-decoration: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body>
+<header>
+    <div class="logo">PNU Place</div>
+    <div class="nav-actions">
+        <a href="/rooms.html" class="nav-btn">Home</a>
+        <a href="/report.html" class="nav-btn report" id="report-link">신고하기</a>
+        <button class="nav-btn logout" onclick="logout()">로그아웃</button>
+    </div>
+</header>
 
+<main>
+    <div id="reservation-card" class="dashboard-card" style="display: none;">
+        <div class="card-header">
+            <div class="room-name" id="room-name">로딩 중...</div>
+            <div class="seat-number" id="seat-number">--</div>
+        </div>
+        <div class="card-body">
+            <div class="timer-label">Time Remaining</div>
+            <div class="timer-display" id="remaining">--:--:--</div>
+
+            <div class="action-buttons">
+                <button id="btn-extend" class="btn btn-primary">연장 (+2h)</button>
+                <button id="btn-return" class="btn btn-outline-danger">반납</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="no-reservation" class="dashboard-card empty-state" style="display: none;">
+        <div class="empty-icon">🪑</div>
+        <p>현재 이용 중인 좌석이 없습니다.</p>
+        <a href="/rooms.html" class="home-link-btn">좌석 배정받기</a>
+    </div>
+</main>
+
+<script>
+    // 로그아웃 함수 (mypage.js에 넣거나 여기에 둠)
+    async function logout() {
+        if (!confirm('로그아웃 하시겠습니까?')) return;
+        try {
+            const res = await fetch('/auth/logout', { method: 'POST' });
+            if (res.ok) window.location.href = '/login.html';
+        } catch (e) { alert('오류 발생'); }
+    }
+</script>
+<script src="/js/mypage.js"></script>
 </body>
 </html>

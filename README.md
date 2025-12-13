@@ -25,13 +25,16 @@
 
 * `201 Created`
 
+<!-- end list -->
+
 ```json
 {
   "message": "회원가입이 완료되었습니다.",
   "user": {
     "id": 1,
     "username": "test1",
-    "name": "홍길동"
+    "name": "홍길동",
+    "role": "USER"
   }
 }
 ```
@@ -39,7 +42,7 @@
 * `400 Bad Request` : 필수 값 누락
 * `409 Conflict` : 이미 존재하는 아이디
 
----
+-----
 
 ### 1.2. 로그인
 
@@ -58,28 +61,37 @@
 
 * `200 OK` + `Set-Cookie: connect.sid=...`
 
+<!-- end list -->
+
 ```json
 {
   "message": "로그인 성공",
   "user": {
     "id": 1,
     "username": "test1",
-    "name": "홍길동"
+    "name": "홍길동",
+    "role": "USER"
   }
 }
 ```
 
 * `401 Unauthorized`
 
+<!-- end list -->
+
 ```json
 { "message": "존재하지 않는 아이디입니다." }
 ```
+
 * 또는
+
+<!-- end list -->
+
 ```json
 { "message": "비밀번호가 올바르지 않습니다." }
 ```
 
----
+-----
 
 ### 1.3. 로그아웃
 
@@ -91,11 +103,13 @@
 
 * `200 OK`
 
+<!-- end list -->
+
 ```json
 { "message": "로그아웃 되었습니다." }
 ```
 
----
+-----
 
 ### 1.4. 현재 로그인 사용자 정보
 
@@ -107,26 +121,31 @@
 
 * 로그인되어 있을 때: `200 OK`
 
+<!-- end list -->
+
 ```json
 {
   "authenticated": true,
   "user": {
     "id": 1,
     "username": "test1",
-    "name": "홍길동"
+    "name": "홍길동",
+    "role": "USER"
   }
 }
 ```
 
 * 로그인 안 되어 있을 때: `401 Unauthorized`
 
+<!-- end list -->
+
 ```json
 { "authenticated": false }
 ```
 
----
+-----
 
-## 2. 열람실 / 좌석 (Rooms / Seats)
+## 2\. 열람실 / 좌석 (Rooms / Seats)
 
 ### 2.1. 열람실 목록 조회
 
@@ -157,7 +176,7 @@
 ]
 ```
 
----
+-----
 
 ### 2.2. 특정 열람실의 좌석 목록 조회
 
@@ -206,9 +225,9 @@
 
 * `404 Not Found` : 존재하지 않는 열람실
 
----
+-----
 
-## 3. 예약 / 좌석 사용 (Reservations)
+## 3\. 예약 / 좌석 사용 (Reservations)
 
 ### 3.1. 내 현재 예약 + 이력 조회
 
@@ -256,7 +275,7 @@
 }
 ```
 
----
+-----
 
 ### 3.2. 좌석 발급
 
@@ -274,6 +293,8 @@
 
 * `201 Created`
 
+<!-- end list -->
+
 ```json
 {
   "message": "좌석이 발급되었습니다.",
@@ -285,23 +306,28 @@
 
   * 이미 다른 좌석 사용 중인 경우
 
+  <!-- end list -->
+
   ```json
   { "message": "이미 사용 중인 좌석이 있습니다." }
   ```
 
   * 해당 좌석이 사용 불가/이미 사용 중인 경우
 
+  <!-- end list -->
+
   ```json
   { "message": "사용할 수 없는 좌석입니다." }
   ```
 
----
+-----
 
 ### 3.3. 좌석 변경
 
 **POST** `/api/reservations/change`
 
 * 인증 필요
+* **동작 방식**: 기존 좌석은 반납 처리되며, 새 좌석에 대한 예약이 생성됩니다. 이때 **기존 예약의 종료 시간(`end_time`)을 그대로 승계**합니다. (시간이 초기화되지 않음)
 
 **Body (JSON)**
 
@@ -313,6 +339,8 @@
 
 * `200 OK`
 
+<!-- end list -->
+
 ```json
 { "message": "좌석이 변경되었습니다." }
 ```
@@ -321,18 +349,21 @@
 
   * 현재 사용 중인 좌석이 없는 경우
 
+  <!-- end list -->
+
   ```json
   { "message": "현재 사용 중인 좌석이 없습니다." }
   ```
 
   * 변경 대상 좌석이 현재 사용 중인 좌석과 동일한 경우
-    (즉, 같은 좌석으로 변경 요청한 경우)
+
+  <!-- end list -->
 
   ```json
   { "message": "이미 사용 중인 좌석입니다." }
   ```
 
----
+-----
 
 ### 3.4. 좌석 연장
 
@@ -348,13 +379,13 @@
 
 * 본인 예약이어야 함
 * `status === 'ACTIVE'`
-* `extend_count < 4`
-* 남은 시간 `< 2시간`
+* `extend_count < 2`
 
 **Response**
 
-
 * `200 OK`
+
+<!-- end list -->
 
 ```json
 { "message": "좌석 사용 시간이 연장되었습니다." }
@@ -362,7 +393,7 @@
 
 * `400 / 404` : 조건 불충족 시 에러 메시지
 
----
+-----
 
 ### 3.5. 좌석 반납
 
@@ -378,15 +409,17 @@
 
 * `200 OK`
 
+<!-- end list -->
+
 ```json
 { "message": "좌석이 반납되었습니다." }
 ```
 
 * `400 / 404` : 이미 종료된 예약, 권한 없음 등
 
----
+-----
 
-## 4. 좌석 문제 신고 (Seat Reports)
+## 4\. 좌석 문제 신고 (Seat Reports)
 
 ### 4.1. 좌석 문제 신고
 
@@ -394,7 +427,6 @@
 
 * 인증 필요
 * **현재 내가 사용 중인 좌석**에 대해서만 신고 가능
-* 신고 대상 `seatId` 는 현재 내가 예약한 좌석의 `seat_id`와 같아야 함
 
 **Path Params**
 
@@ -413,6 +445,8 @@
 
 * `201 Created`
 
+<!-- end list -->
+
 ```json
 { "message": "좌석 문제가 신고되었습니다." }
 ```
@@ -420,40 +454,91 @@
 **동작**
 
 * `seat_reports` 테이블에 신고 기록 생성
-* 해당 좌석의 `status` 를 `UNUSABLE` 로 변경 -> 이후 예약 불가
+* 해당 좌석의 `status` 를 `UNUSABLE` 로 변경
 * 해당 좌석에 대한 **사용자의 ACTIVE 예약은 즉시 반납 처리**
 
-  * `reservations.status` = `'RETURNED'`
-  * `reservations.end_time` = 신고 시각(`NOW()`)
+-----
 
-**에러**
+## 5\. 관리자 (Admin)
 
-* `400 Bad Request`
+### 5.1. 신고 목록 조회
 
-  * 현재 사용 중인 좌석이 없는 경우
+**GET** `/api/admin/reports`
 
-  ```json
-  { "message": "현재 사용 중인 좌석이 없습니다." }
-  ```
+* 인증 필요 (관리자 권한: `role === 'ADMIN'`)
 
-  * `category` 누락
+**Response** (`200 OK`)
 
-  ```json
-  { "message": "문제 유형(category)은 필수입니다." }
-  ```
+```json
+[
+  {
+    "id": 1,
+    "seat_id": 12,
+    "user_id": 5,
+    "category": "broken",
+    "detail": "의자 다리가 부러짐",
+    "status": "PENDING",
+    "created_at": "2025-06-01T09:00:00.000Z",
+    "seat_number": 203,
+    "room_name": "4F 노트북열람실-A",
+    "reporter_name": "홍길동"
+  }
+]
+```
 
-* `403 Forbidden`
+-----
 
-  * 내가 사용 중인 좌석이 아닌 다른 좌석을 신고하려는 경우
+### 5.2. 신고 처리 (좌석 복구)
 
-  ```json
-  { "message": "현재 사용 중인 좌석에 대해서만 신고할 수 있습니다." }
-  ```
+**POST** `/api/admin/reports/:id/resolve`
 
-* `404 Not Found`
+* 인증 필요 (관리자 권한)
+* 신고 상태를 `RESOLVED`로 변경하고, 해당 좌석을 다시 `USABLE`로 변경합니다.
 
-  * 존재하지 않는 좌석인 경우
+**Path Params**
 
-  ```json
-  { "message": "존재하지 않는 좌석입니다." }
-  ```
+* `id`: 신고 ID
+
+**Response** (`200 OK`)
+
+```json
+{ "message": "신고가 처리되었으며 좌석이 복구되었습니다." }
+```
+
+-----
+
+### 5.3. 좌석 강제 반납
+
+**POST** `/api/admin/seats/:seatId/return`
+
+* 인증 필요 (관리자 권한)
+* 특정 좌석의 현재 사용자를 강제 퇴실(반납) 처리하고 좌석을 `USABLE`로 만듭니다.
+
+**Path Params**
+
+* `seatId`: 좌석 ID
+
+**Response** (`200 OK`)
+
+```json
+{ "message": "좌석이 강제 반납되었습니다." }
+```
+
+-----
+
+### 5.4. 좌석 강제 사용 불가 처리
+
+**POST** `/api/admin/seats/:seatId/disable`
+
+* 인증 필요 (관리자 권한)
+* 특정 좌석을 `UNUSABLE` 상태로 만듭니다.
+
+**Path Params**
+
+* `seatId`: 좌석 ID
+
+**Response** (`200 OK`)
+
+```json
+{ "message": "좌석이 사용 불가 처리되었습니다." }
+```

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>관리자 페이지 | PNU Place</title>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; margin: 0; background: #f0f2f5; }
+    header { background: #343a40; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+
+    .container { max-width: 1000px; margin: 30px auto; display: flex; flex-direction: column; gap: 30px; }
+
+    /* 카드 공통 스타일 */
+    .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    h2 { border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; color: #333; font-size: 1.5rem; }
+
+    /* 테이블 스타일 */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: #f8f9fa; font-weight: 600; color: #555; }
+
+    /* 버튼 스타일 */
+    .btn { padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; color: white; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-resolve { background: #28a745; }
+    .btn-resolve:hover { background: #218838; }
+    .btn-return { background: #ffc107; color: #333; }
+    .btn-return:hover { background: #e0a800; }
+    .btn-disable { background: #dc3545; }
+    .btn-disable:hover { background: #c82333; }
+
+    /* 좌석 관리 컨트롤 스타일 */
+    .control-panel { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 15px; }
+    select { padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-size: 1rem; min-width: 200px; }
+    .seat-status-info { margin-left: auto; font-weight: bold; color: #005baa; }
+
+    .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+    .status-pending { background: #ffeeba; color: #856404; }
+    .status-resolved { background: #d4edda; color: #155724; }
+  </style>
+</head>
+<body>
+<header>
+  <div style="font-weight:bold; font-size:1.2rem;">관리자 대시보드</div>
+  <a href="/rooms.html" style="color:white; text-decoration:none;">Home</a>
+</header>
+
+<div class="container">
+
+  <section class="card">
+    <h2>🛠️ 좌석 개별 관리</h2>
+    <p style="color:#666; margin-bottom: 20px;">특정 좌석을 선택하여 강제로 반납시키거나 사용 불가 상태로 변경할 수 있습니다.</p>
+
+    <div class="control-panel">
+      <select id="room-select" onchange="loadSeats(this.value)">
+        <option value="">열람실을 선택하세요</option>
+      </select>
+
+      <select id="seat-select" disabled onchange="updateSeatInfo()">
+        <option value="">좌석을 선택하세요</option>
+      </select>
+
+      <div id="seat-status-display" class="seat-status-info"></div>
+    </div>
+
+    <div class="control-panel" style="justify-content: flex-end; margin-top: 20px;">
+      <button id="btn-force-return" class="btn btn-return" onclick="handleForceReturn()" disabled>강제 반납 (퇴실)</button>
+      <button id="btn-disable-seat" class="btn btn-disable" onclick="handleDisableSeat()" disabled>사용 불가 (점검)</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🚫 사용 불가 좌석 관리 (신고 및 점검)</h2>
+    <p style="color:#666; margin-bottom: 10px; font-size: 0.9em;">
+      현재 '사용 불가(UNUSABLE)' 상태인 모든 좌석 목록입니다.<br>
+      신고된 좌석과 관리자가 직접 막은 좌석이 모두 표시됩니다. [복구] 버튼을 누르면 다시 이용 가능해집니다.
+    </p>
+    <table>
+      <thead>
+      <tr>
+        <th>위치</th>
+        <th>상태</th>
+        <th>사유 (신고내용 등)</th>
+        <th>접수일시</th>
+        <th>작업</th>
+      </tr>
+      </thead>
+      <tbody id="unusable-list">
+      <tr><td colspan="5" style="text-align:center; padding: 20px;">데이터를 불러오는 중...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+<script>
+  // ===============================================
+  // 1. 공통 데이터 로드 (열람실 목록)
+  // ===============================================
+  async function loadRooms() {
+    try {
+      const res = await fetch('/api/rooms', { credentials: 'same-origin' });
+      const rooms = await res.json();
+      const select = document.getElementById('room-select');
+
+      // 중복 추가 방지 (혹시 모를 상황 대비)
+      select.innerHTML = '<option value="">열람실을 선택하세요</option>';
+
+      rooms.forEach(room => {
+        const option = document.createElement('option');
+        option.value = room.id;
+        option.textContent = `${room.name} (${room.floor}층)`;
+        select.appendChild(option);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  // ===============================================
+  // 2. 상단: 개별 좌석 관리 로직
+  // ===============================================
+  let currentSeats = [];
+
+  // 특정 열람실의 좌석 목록 가져오기
+  async function loadSeats(roomId) {
+    const seatSelect = document.getElementById('seat-select');
+    const statusDisplay = document.getElementById('seat-status-display');
+    const btnReturn = document.getElementById('btn-force-return');
+    const btnDisable = document.getElementById('btn-disable-seat');
+
+    // UI 초기화
+    seatSelect.innerHTML = '<option value="">좌석을 선택하세요</option>';
+    seatSelect.disabled = true;
+    statusDisplay.textContent = '';
+    btnReturn.disabled = true;
+    btnDisable.disabled = true;
+    currentSeats = [];
+
+    if (!roomId) return;
+
+    try {
+      const res = await fetch(`/api/rooms/${roomId}/seats`, { credentials: 'same-origin' });
+      const data = await res.json();
+      currentSeats = data.seats;
+
+      // 보기 좋게 번호순 정렬
+      currentSeats.sort((a, b) => a.seatNumber - b.seatNumber);
+
+      currentSeats.forEach(seat => {
+        const option = document.createElement('option');
+        option.value = seat.id;
+
+        // 상태에 따라 텍스트 다르게 (관리자가 보기 편하게)
+        let statusText = '';
+        if (seat.status === 'RESERVED') statusText = ' (이용 중)';
+        else if (seat.status === 'UNUSABLE') statusText = ' (🚫 사용 불가)';
+
+        option.textContent = `${seat.seatNumber}번${statusText}`;
+        seatSelect.appendChild(option);
+      });
+
+      seatSelect.disabled = false;
+    } catch(e) { console.error(e); }
+  }
+
+  // 좌석 선택 시 버튼 활성화/비활성화 처리
+  function updateSeatInfo() {
+    const seatId = Number(document.getElementById('seat-select').value);
+    const seat = currentSeats.find(s => s.id === seatId);
+
+    const statusDisplay = document.getElementById('seat-status-display');
+    const btnReturn = document.getElementById('btn-force-return');
+    const btnDisable = document.getElementById('btn-disable-seat');
+
+    if (!seat) {
+      statusDisplay.textContent = '';
+      return;
+    }
+
+    statusDisplay.textContent = `현재 상태: ${seat.status}`;
+
+    // 강제 반납은 '예약 중'일 때만 가능
+    btnReturn.disabled = (seat.status !== 'RESERVED');
+
+    // 사용 불가는 이미 '사용 불가'가 아닐 때만 가능
+    btnDisable.disabled = (seat.status === 'UNUSABLE');
+  }
+
+  // [액션] 강제 반납
+  async function handleForceReturn() {
+    const seatId = document.getElementById('seat-select').value;
+    if(!seatId) return;
+    if(!confirm('사용자를 강제로 퇴실 처리하시겠습니까?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/seats/${seatId}/return`, { method: 'POST', credentials: 'same-origin' });
+      const json = await res.json();
+      if(res.ok) {
+        alert(json.message);
+        loadSeats(document.getElementById('room-select').value); // 상태 갱신
+      } else {
+        alert('오류: ' + json.message);
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  // [액션] 사용 불가 처리
+  async function handleDisableSeat() {
+    const seatId = document.getElementById('seat-select').value;
+    if(!seatId) return;
+    if(!confirm('이 좌석을 [사용 불가] 상태로 변경하시겠습니까?\n(사용자가 있다면 강제 퇴실됩니다.)')) return;
+
+    try {
+      const res = await fetch(`/api/admin/seats/${seatId}/disable`, { method: 'POST', credentials: 'same-origin' });
+      const json = await res.json();
+      if(res.ok) {
+        alert(json.message);
+        loadSeats(document.getElementById('room-select').value); // 상단 갱신
+        loadUnusableSeats(); // 하단 목록도 같이 갱신
+      } else {
+        alert('오류: ' + json.message);
+      }
+    } catch(e) { console.error(e); }
+  }
+
+
+  // ===============================================
+  // 3. 하단: 사용 불가(신고/점검) 좌석 목록 로직
+  // ===============================================
+  async function loadUnusableSeats() {
+    try {
+      const res = await fetch('/api/admin/seats/unusable', { credentials: 'same-origin' });
+
+      // 관리자 아니면 튕겨내기
+      if(res.status === 403) { alert('관리자 권한이 없습니다.'); window.location.href='/'; return; }
+
+      const seats = await res.json();
+      const tbody = document.getElementById('unusable-list');
+      tbody.innerHTML = '';
+
+      if (!seats || seats.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">현재 문제있는 좌석이 없습니다. 😊</td></tr>';
+        return;
+      }
+
+      seats.forEach(s => {
+        const tr = document.createElement('tr');
+
+        // 신고 사유가 없으면 관리자가 직접 막은 것
+        let reason = `<span style="color:#888;">(관리자 직권 설정)</span>`;
+        if (s.category) {
+          reason = `<strong style="color:#d9534f;">[${s.category}]</strong> ${s.detail}`;
+        }
+
+        let dateStr = '-';
+        if (s.report_date) {
+          const d = new Date(s.report_date);
+          dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}`;
+        }
+
+        tr.innerHTML = `
+          <td><strong>${s.room_name}</strong><br><small>#${s.seat_number}</small></td>
+          <td><span class="status-badge" style="background:#6c757d; color:white;">${s.status}</span></td>
+          <td>${reason}</td>
+          <td>${dateStr}</td>
+          <td>
+            <button class="btn btn-resolve" onclick="enableSeat(${s.seat_id})">복구 (사용 가능)</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch(e) { console.error(e); }
+  }
+
+  // [액션] 좌석 복구 (Enable)
+  async function enableSeat(seatId) {
+    if(!confirm('좌석을 [이용 가능] 상태로 복구하시겠습니까?\n관련 신고 내역도 해결 처리됩니다.')) return;
+
+    try {
+      const res = await fetch(`/api/admin/seats/${seatId}/enable`, { method: 'POST', credentials: 'same-origin' });
+      const json = await res.json();
+
+      if(res.ok) {
+        alert(json.message);
+        loadUnusableSeats(); // 하단 목록 갱신
+
+        // 상단 패널도 갱신 (만약 그 방을 보고 있었다면)
+        const roomSelect = document.getElementById('room-select');
+        if(roomSelect.value) loadSeats(roomSelect.value);
+      } else {
+        alert('오류: ' + json.message);
+      }
+    } catch(e) { console.error(e); }
+  }
+
+  // 페이지 로드 시 실행
+  document.addEventListener('DOMContentLoaded', () => {
+    loadUnusableSeats(); // 문제 좌석 목록 로드
+    loadRooms();         // 상단 열람실 목록 로드
+  });
+</script>
+</body>
+</html>
