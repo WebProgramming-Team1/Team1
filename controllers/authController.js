@@ -12,12 +12,12 @@ exports.register = async (req, res, next) => {
         const { username, password, name } = req.body;
 
         if (!username || !password || !name) {
-            return res.status(400).json({ message: '아이디, 이름, 비밀번호는 필수입니다.' });
+            return res.status(400).json({ success: false, message: '아이디, 이름, 비밀번호는 필수입니다.' });
         }
 
         const existing = await userModel.findByUsername(username);
         if (existing) {
-            return res.status(409).json({ message: '이미 존재하는 아이디입니다.' });
+            return res.status(409).json({ success: false, message: '이미 존재하는 아이디입니다.' });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -41,25 +41,18 @@ exports.register = async (req, res, next) => {
 exports.login = (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) return next(err);
-
-        if (!user) {
-            return res.status(401).json({
-                message: info?.message || '로그인에 실패했습니다.',
-            });
-        }
+        if (!user) return res.status(401).json({ success: false, message: info?.message });
 
         req.logIn(user, (err) => {
             if (err) return next(err);
-
-            const safeUser = {
-                id: user.id,
-                username: user.username,
-                name: user.name,
-            };
-
             return res.json({
                 message: '로그인 성공',
-                user: safeUser,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    name: user.name,
+                    role: user.role
+                },
             });
         });
     })(req, res, next);
@@ -81,13 +74,13 @@ exports.logout = (req, res, next) => {
  */
 exports.getMe = (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.status(401).json({ authenticated: false });
+        return res.status(401).json({ success: false, authenticated: false });
     }
 
-    const { id, username, name } = req.user;
+    const { id, username, name, role } = req.user;
 
     res.json({
         authenticated: true,
-        user: { id, username, name },
+        user: { id, username, name, role },
     });
 };
