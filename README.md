@@ -490,7 +490,7 @@
 
 ### 5.2. 신고 처리 (좌석 복구)
 
-**POST** `/api/admin/reports/:id/resolve`
+**POST** `/api/admin/seats/:seatId/enable`
 
 * 인증 필요 (관리자 권한)
 * 신고 상태를 `RESOLVED`로 변경하고, 해당 좌석을 다시 `USABLE`로 변경합니다.

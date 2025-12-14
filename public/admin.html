@@ -93,16 +93,14 @@
 </div>
 
 <script>
-  // ===============================================
-  // 1. 공통 데이터 로드 (열람실 목록)
-  // ===============================================
+  // 공통 데이터 로드 (열람실 목록)
   async function loadRooms() {
     try {
       const res = await fetch('/api/rooms', { credentials: 'same-origin' });
       const rooms = await res.json();
       const select = document.getElementById('room-select');
 
-      // 중복 추가 방지 (혹시 모를 상황 대비)
+      // 중복 추가 방지
       select.innerHTML = '<option value="">열람실을 선택하세요</option>';
 
       rooms.forEach(room => {
@@ -114,9 +112,7 @@
     } catch(e) { console.error(e); }
   }
 
-  // ===============================================
-  // 2. 상단: 개별 좌석 관리 로직
-  // ===============================================
+  // 개별 좌석 관리 로직
   let currentSeats = [];
 
   // 특정 열람실의 좌석 목록 가져오기
@@ -141,14 +137,14 @@
       const data = await res.json();
       currentSeats = data.seats;
 
-      // 보기 좋게 번호순 정렬
+      // 번호순 정렬
       currentSeats.sort((a, b) => a.seatNumber - b.seatNumber);
 
       currentSeats.forEach(seat => {
         const option = document.createElement('option');
         option.value = seat.id;
 
-        // 상태에 따라 텍스트 다르게 (관리자가 보기 편하게)
+        // 상태에 따라 텍스트 다르게
         let statusText = '';
         if (seat.status === 'RESERVED') statusText = ' (이용 중)';
         else if (seat.status === 'UNUSABLE') statusText = ' (🚫 사용 불가)';
@@ -177,14 +173,14 @@
 
     statusDisplay.textContent = `현재 상태: ${seat.status}`;
 
-    // 강제 반납은 '예약 중'일 때만 가능
+    // 강제 반납은 예약 중일 때만 가능
     btnReturn.disabled = (seat.status !== 'RESERVED');
 
-    // 사용 불가는 이미 '사용 불가'가 아닐 때만 가능
+    // 사용 불가는 이미 사용 불가가 아닐 때만 가능
     btnDisable.disabled = (seat.status === 'UNUSABLE');
   }
 
-  // [액션] 강제 반납
+  // 강제 반납
   async function handleForceReturn() {
     const seatId = document.getElementById('seat-select').value;
     if(!seatId) return;
@@ -202,7 +198,7 @@
     } catch(e) { console.error(e); }
   }
 
-  // [액션] 사용 불가 처리
+  // 사용 불가 처리
   async function handleDisableSeat() {
     const seatId = document.getElementById('seat-select').value;
     if(!seatId) return;
@@ -222,9 +218,7 @@
   }
 
 
-  // ===============================================
-  // 3. 하단: 사용 불가(신고/점검) 좌석 목록 로직
-  // ===============================================
+  // 하단: 사용 불가(신고/점검) 좌석 목록 로직
   async function loadUnusableSeats() {
     try {
       const res = await fetch('/api/admin/seats/unusable', { credentials: 'same-origin' });
@@ -270,7 +264,7 @@
     } catch(e) { console.error(e); }
   }
 
-  // [액션] 좌석 복구 (Enable)
+  // 좌석 복구 (Enable)
   async function enableSeat(seatId) {
     if(!confirm('좌석을 [이용 가능] 상태로 복구하시겠습니까?\n관련 신고 내역도 해결 처리됩니다.')) return;
 
@@ -291,7 +285,6 @@
     } catch(e) { console.error(e); }
   }
 
-  // 페이지 로드 시 실행
   document.addEventListener('DOMContentLoaded', () => {
     loadUnusableSeats(); // 문제 좌석 목록 로드
     loadRooms();         // 상단 열람실 목록 로드
